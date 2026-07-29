@@ -2,11 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UploadCloud } from "lucide-react";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
+import { LEAD_CATEGORIES } from "@/lib/types/database";
 import { importLeads } from "../actions";
 
 const TEMPLATE_CSV = [
-  "Venue Name,Phone,Email,Location,Source,Status,Assigned To,Notes",
-  "Acme Salon,555-0100,jane@example.com,Downtown,Referral,New,,First contact pending",
+  "Venue Name,Phone,Email,Location,Category,Source,Status,Assigned To,Notes",
+  "Acme Salon,555-0100,jane@example.com,Downtown,Salon,Referral,New,,First contact pending",
 ].join("\n");
 
 const TEMPLATE_HREF = `data:text/csv;charset=utf-8,${encodeURIComponent(
@@ -41,10 +42,11 @@ export default async function ImportLeadsPage({
         <p className="text-sm text-slate-500">
           Upload a CSV with a header row. Only <strong>Venue Name</strong> is
           required — <code className="text-xs">Phone, Email, Location,
-          Source, Status, Assigned To, Notes</code> are all optional.
-          Rows without a venue name are skipped. Unrecognized status values
-          default to &ldquo;New&rdquo;; &ldquo;Assigned To&rdquo; is matched
-          against a sales rep&apos;s name (leave blank for unassigned).
+          Category, Source, Status, Assigned To, Notes</code> are all
+          optional. Rows without a venue name are skipped. Unrecognized
+          category or status values are left blank / default to
+          &ldquo;New&rdquo;; &ldquo;Assigned To&rdquo; is matched against a
+          sales rep&apos;s name (leave blank for unassigned).
         </p>
 
         <a
@@ -63,6 +65,29 @@ export default async function ImportLeadsPage({
             required
             className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-dark file:px-3.5 file:py-2 file:text-sm file:font-medium hover:file:bg-brand-100"
           />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Category for this batch
+            </label>
+            <select
+              name="category"
+              defaultValue=""
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm bg-white"
+            >
+              <option value="">
+                No override — use each row&apos;s Category column
+              </option>
+              {LEAD_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  Set all to: {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-400 mt-1">
+              Handy when the whole file is one type of venue — pick it here
+              instead of adding a Category column.
+            </p>
+          </div>
           <button
             type="submit"
             className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand to-brand-indigo text-white text-sm font-medium px-4 py-2 shadow-sm shadow-brand/30 hover:opacity-95 transition"

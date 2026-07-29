@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeHeader, parseCsv } from "@/lib/csv";
-import { LEAD_STATUSES, type LeadStatus, type Profile } from "@/lib/types/database";
+import {
+  LEAD_CATEGORIES,
+  LEAD_STATUSES,
+  type LeadCategory,
+  type LeadStatus,
+  type Profile,
+} from "@/lib/types/database";
 
 export async function createLead(formData: FormData) {
   const supabase = createClient();
@@ -19,6 +25,8 @@ export async function createLead(formData: FormData) {
   }
 
   const assignedTo = String(formData.get("assigned_to") ?? "") || null;
+  const category =
+    (String(formData.get("category") ?? "") as LeadCategory) || null;
 
   const { error } = await supabase.from("leads").insert({
     name,
@@ -28,6 +36,7 @@ export async function createLead(formData: FormData) {
     source: String(formData.get("source") ?? "") || null,
     notes: String(formData.get("notes") ?? "") || null,
     assigned_to: assignedTo,
+    category,
     created_by: user.id,
   });
 
@@ -43,6 +52,17 @@ export async function createLead(formData: FormData) {
 export async function updateLeadStatus(leadId: string, status: LeadStatus) {
   const supabase = createClient();
   await supabase.from("leads").update({ status }).eq("id", leadId);
+  revalidatePath("/leads");
+  revalidatePath(`/leads/${leadId}`);
+  revalidatePath("/dashboard");
+}
+
+export async function updateLeadCategory(
+  leadId: string,
+  category: LeadCategory | null
+) {
+  const supabase = createClient();
+  await supabase.from("leads").update({ category }).eq("id", leadId);
   revalidatePath("/leads");
   revalidatePath(`/leads/${leadId}`);
   revalidatePath("/dashboard");
@@ -120,6 +140,15 @@ function resolveStatus(raw: string): LeadStatus {
   return match?.value ?? "new";
 }
 
+function resolveCategory(raw: string): LeadCategory | null {
+  const needle = normalizeHeader(raw);
+  if (!needle) return null;
+  const match = LEAD_CATEGORIES.find(
+    (c) => normalizeHeader(c.value) === needle || normalizeHeader(c.label) === needle
+  );
+  return match?.value ?? null;
+}
+
 function resolveRep(raw: string, reps: Profile[]): string | null {
   const needle = raw.trim().toLowerCase();
   if (!needle || needle === "unassigned") return null;
@@ -188,6 +217,7 @@ export async function importLeads(formData: FormData) {
   const companyIdx = findIdx("location", "company");
   const sourceIdx = header.indexOf("source");
   const statusIdx = header.indexOf("status");
+  const categoryIdx = header.indexOf("category");
   const assignedIdx = header.findIndex(
     (h) => h === "assignedto" || h === "assignee" || h === "rep"
   );
@@ -198,6 +228,9 @@ export async function importLeads(formData: FormData) {
     .select("*")
     .eq("role", "sales_rep");
   const reps = (profilesData ?? []) as Profile[];
+
+  const categoryOverride =
+    (String(formData.get("category") ?? "") as LeadCategory) || null;
 
   const cell = (row: string[], idx: number) =>
     idx >= 0 ? (row[idx] ?? "").trim() : "";
@@ -220,6 +253,9 @@ export async function importLeads(formData: FormData) {
       source: cell(row, sourceIdx) || null,
       notes: cell(row, notesIdx) || null,
       status: statusIdx >= 0 ? resolveStatus(cell(row, statusIdx)) : "new",
+      category:
+        categoryOverride ??
+        (categoryIdx >= 0 ? resolveCategory(cell(row, categoryIdx)) : null),
       assigned_to:
         assignedIdx >= 0 ? resolveRep(cell(row, assignedIdx), reps) : null,
       created_by: user.id,

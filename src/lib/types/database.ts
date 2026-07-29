@@ -8,6 +8,14 @@ export type LeadStatus =
   | "demo_booked"
   | "not_interested";
 
+export type LeadCategory =
+  | "salon"
+  | "spa"
+  | "aesthetics"
+  | "barbershop"
+  | "nail_studio"
+  | "med_spa";
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -30,6 +38,7 @@ export interface Lead {
   source: string | null;
   notes: string | null;
   status: LeadStatus;
+  category: LeadCategory | null;
   assigned_to: string | null;
   created_by: string | null;
   created_at: string;
@@ -92,4 +101,32 @@ export const STATUS_STYLES: Record<
     badgeBg: "bg-rose-50",
     badgeText: "text-rose-600",
   },
+};
+
+export const LEAD_CATEGORIES: { value: LeadCategory; label: string }[] = [
+  { value: "salon", label: "Salon" },
+  { value: "spa", label: "Spa" },
+  { value: "aesthetics", label: "Aesthetics" },
+  { value: "barbershop", label: "Barbershop" },
+  { value: "nail_studio", label: "Nail Studio" },
+  { value: "med_spa", label: "Med Spa" },
+];
+
+export function categoryLabel(category: LeadCategory | null): string {
+  if (!category) return "Uncategorized";
+  return (
+    LEAD_CATEGORIES.find((c) => c.value === category)?.label ?? category
+  );
+}
+
+export const CATEGORY_STYLES: Record<
+  LeadCategory,
+  { badgeBg: string; badgeText: string }
+> = {
+  salon: { badgeBg: "bg-violet-50", badgeText: "text-violet-700" },
+  spa: { badgeBg: "bg-teal-50", badgeText: "text-teal-700" },
+  aesthetics: { badgeBg: "bg-pink-50", badgeText: "text-pink-700" },
+  barbershop: { badgeBg: "bg-orange-50", badgeText: "text-orange-700" },
+  nail_studio: { badgeBg: "bg-fuchsia-50", badgeText: "text-fuchsia-700" },
+  med_spa: { badgeBg: "bg-cyan-50", badgeText: "text-cyan-700" },
 };

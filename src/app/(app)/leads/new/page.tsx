@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
-import { repLabel, type Profile } from "@/lib/types/database";
+import { LEAD_CATEGORIES, repLabel, type Profile } from "@/lib/types/database";
 import { createLead } from "../actions";
 
 export default async function NewLeadPage({
@@ -76,6 +76,24 @@ export default async function NewLeadPage({
             name="company"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Category
+          </label>
+          <select
+            name="category"
+            defaultValue=""
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm bg-white"
+          >
+            <option value="">Uncategorized</option>
+            {LEAD_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

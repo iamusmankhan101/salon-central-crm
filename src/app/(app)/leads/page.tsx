@@ -3,10 +3,14 @@ import { Download, Phone, Mail, Plus, Search, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
 import {
+  CATEGORY_STYLES,
+  LEAD_CATEGORIES,
   LEAD_STATUSES,
   STATUS_STYLES,
+  categoryLabel,
   repLabel,
   type Lead,
+  type LeadCategory,
   type LeadStatus,
   type Profile,
 } from "@/lib/types/database";
@@ -24,6 +28,7 @@ export default async function LeadsPage({
     rep?: string;
     q?: string;
     status?: string;
+    category?: string;
     imported?: string;
     skipped?: string;
   };
@@ -42,6 +47,9 @@ export default async function LeadsPage({
   }
   if (searchParams.status) {
     query = query.eq("status", searchParams.status as LeadStatus);
+  }
+  if (searchParams.category) {
+    query = query.eq("category", searchParams.category as LeadCategory);
   }
 
   const { data: leadsData } = await query;
@@ -71,9 +79,11 @@ export default async function LeadsPage({
     const rep = overrides.rep ?? searchParams.rep;
     const q = overrides.q ?? searchParams.q;
     const status = overrides.status ?? searchParams.status;
+    const category = overrides.category ?? searchParams.category;
     if (rep) params.set("rep", rep);
     if (q) params.set("q", q);
     if (status) params.set("status", status);
+    if (category) params.set("category", category);
     return params.toString();
   };
 
@@ -147,6 +157,18 @@ export default async function LeadsPage({
             {LEAD_STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
+              </option>
+            ))}
+          </select>
+          <select
+            name="category"
+            defaultValue={searchParams.category ?? ""}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand"
+          >
+            <option value="">All Categories</option>
+            {LEAD_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
               </option>
             ))}
           </select>
@@ -245,6 +267,7 @@ export default async function LeadsPage({
                 <th className="px-4 py-3 font-medium">Venue Name</th>
                 <th className="px-4 py-3 font-medium">Phone</th>
                 <th className="px-4 py-3 font-medium">Location</th>
+                <th className="px-4 py-3 font-medium">Category</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Assigned</th>
                 <th className="px-4 py-3 font-medium">Created</th>
@@ -275,6 +298,13 @@ export default async function LeadsPage({
                     {lead.company ?? "—"}
                   </td>
                   <td className="px-4 py-3">
+                    {lead.category ? (
+                      <CategoryBadge category={lead.category} />
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <StatusSelect leadId={lead.id} status={lead.status} />
                   </td>
                   <td className="px-4 py-3">
@@ -293,7 +323,7 @@ export default async function LeadsPage({
               {leads.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-8 text-center text-slate-400"
                   >
                     No leads found
@@ -339,6 +369,8 @@ function LeadCard({
         </div>
       </Link>
 
+      {lead.category && <CategoryBadge category={lead.category} />}
+
       <div className="text-xs text-slate-500 space-y-1">
         {lead.phone && (
           <div className="flex items-center gap-1.5">
@@ -366,6 +398,17 @@ function LeadCard({
         />
       </div>
     </div>
+  );
+}
+
+function CategoryBadge({ category }: { category: LeadCategory }) {
+  const style = CATEGORY_STYLES[category];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full ${style.badgeBg} ${style.badgeText} text-xs font-medium px-2 py-0.5`}
+    >
+      {categoryLabel(category)}
+    </span>
   );
 }
 

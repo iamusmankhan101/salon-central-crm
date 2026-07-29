@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { csvEscape } from "@/lib/csv";
 import {
+  categoryLabel,
   statusLabel,
   type Lead,
+  type LeadCategory,
   type LeadStatus,
   type Profile,
 } from "@/lib/types/database";
@@ -13,6 +15,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rep = searchParams.get("rep");
   const status = searchParams.get("status");
+  const category = searchParams.get("category");
   const q = searchParams.get("q");
 
   let query = supabase
@@ -22,6 +25,7 @@ export async function GET(request: NextRequest) {
 
   if (rep) query = query.eq("assigned_to", rep);
   if (status) query = query.eq("status", status as LeadStatus);
+  if (category) query = query.eq("category", category as LeadCategory);
 
   const { data: leadsData } = await query;
   let leads = (leadsData ?? []) as Lead[];
@@ -47,6 +51,7 @@ export async function GET(request: NextRequest) {
     "Phone",
     "Email",
     "Location",
+    "Category",
     "Source",
     "Status",
     "Assigned To",
@@ -59,6 +64,7 @@ export async function GET(request: NextRequest) {
     l.phone ?? "",
     l.email ?? "",
     l.company ?? "",
+    l.category ? categoryLabel(l.category) : "",
     l.source ?? "",
     statusLabel(l.status),
     l.assigned_to

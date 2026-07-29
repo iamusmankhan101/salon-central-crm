@@ -11,6 +11,7 @@ import {
 import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { StatusSelect } from "../status-select";
 import { AssignSelect } from "../assign-select";
+import { CategorySelect } from "../category-select";
 import { claimLead, logCall, updateLeadNotes } from "../actions";
 
 export default async function LeadDetailPage({
@@ -85,7 +86,13 @@ export default async function LeadDetailPage({
           </div>
 
           <div className="flex flex-col items-end gap-2 text-sm">
-            <StatusSelect leadId={typedLead.id} status={typedLead.status} />
+            <div className="flex items-center gap-2">
+              <StatusSelect leadId={typedLead.id} status={typedLead.status} />
+              <CategorySelect
+                leadId={typedLead.id}
+                category={typedLead.category}
+              />
+            </div>
             {isAdmin ? (
               <AssignSelect
                 leadId={typedLead.id}
