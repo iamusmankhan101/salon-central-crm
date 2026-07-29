@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Phone, Mail, Plus, Search } from "lucide-react";
+import { Download, Phone, Mail, Plus, Search, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
 import {
@@ -18,7 +18,14 @@ import { claimLead } from "./actions";
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: { view?: string; rep?: string; q?: string; status?: string };
+  searchParams: {
+    view?: string;
+    rep?: string;
+    q?: string;
+    status?: string;
+    imported?: string;
+    skipped?: string;
+  };
 }) {
   const supabase = createClient();
   const { profile } = await getCurrentUserAndProfile();
@@ -83,6 +90,15 @@ export default async function LeadsPage({
           </a>
           {isAdmin && (
             <Link
+              href="/leads/import"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-sm px-3.5 py-2 hover:bg-slate-50 transition"
+            >
+              <Upload className="h-4 w-4" />
+              Import CSV
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
               href="/leads/new"
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand to-brand-indigo text-white text-sm font-medium px-3.5 py-2 shadow-sm shadow-brand/30 hover:opacity-95 transition"
             >
@@ -92,6 +108,18 @@ export default async function LeadsPage({
           )}
         </div>
       </div>
+
+      {searchParams.imported && (
+        <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3.5 py-2.5">
+          Imported {searchParams.imported}{" "}
+          {searchParams.imported === "1" ? "lead" : "leads"}.
+          {searchParams.skipped && searchParams.skipped !== "0"
+            ? ` Skipped ${searchParams.skipped} row${
+                searchParams.skipped === "1" ? "" : "s"
+              } without a name.`
+            : ""}
+        </div>
+      )}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <form

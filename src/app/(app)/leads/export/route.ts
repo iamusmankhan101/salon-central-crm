@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { csvEscape } from "@/lib/csv";
 import {
   statusLabel,
   type Lead,
   type LeadStatus,
   type Profile,
 } from "@/lib/types/database";
-
-function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
 
 export async function GET(request: NextRequest) {
   const supabase = createClient();
