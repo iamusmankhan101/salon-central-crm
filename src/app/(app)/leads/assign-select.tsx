@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import type { Profile } from "@/lib/types/database";
+import { repLabel, type Profile } from "@/lib/types/database";
 import { assignLead } from "./actions";
 
 export function AssignSelect({
@@ -30,7 +30,7 @@ export function AssignSelect({
       <option value="">Unassigned</option>
       {reps.map((rep) => (
         <option key={rep.id} value={rep.id}>
-          {rep.full_name ?? rep.id}
+          {repLabel(rep)}
         </option>
       ))}
     </select>

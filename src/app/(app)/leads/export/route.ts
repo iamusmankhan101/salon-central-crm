@@ -43,10 +43,10 @@ export async function GET(request: NextRequest) {
   );
 
   const header = [
-    "Name",
+    "Venue Name",
     "Phone",
     "Email",
-    "Company",
+    "Location",
     "Source",
     "Status",
     "Assigned To",

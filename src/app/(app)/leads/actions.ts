@@ -15,7 +15,7 @@ export async function createLead(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) {
-    redirect(`/leads/new?error=${encodeURIComponent("Name is required")}`);
+    redirect(`/leads/new?error=${encodeURIComponent("Venue name is required")}`);
   }
 
   const assignedTo = String(formData.get("assigned_to") ?? "") || null;
@@ -124,7 +124,9 @@ function resolveRep(raw: string, reps: Profile[]): string | null {
   const needle = raw.trim().toLowerCase();
   if (!needle || needle === "unassigned") return null;
   const match = reps.find(
-    (r) => (r.full_name ?? "").trim().toLowerCase() === needle
+    (r) =>
+      (r.full_name ?? "").trim().toLowerCase() === needle ||
+      (r.email ?? "").trim().toLowerCase() === needle
   );
   return match?.id ?? null;
 }
@@ -147,7 +149,12 @@ export async function importLeads(formData: FormData) {
   }
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
+  if (!file || typeof file === "string") {
+    redirect(
+      `/leads/import?error=${encodeURIComponent("Choose a CSV file to import")}`
+    );
+  }
+  if (file.size === 0) {
     redirect(
       `/leads/import?error=${encodeURIComponent("Choose a CSV file to import")}`
     );
@@ -163,19 +170,22 @@ export async function importLeads(formData: FormData) {
   }
 
   const header = rows[0].map(normalizeHeader);
-  const nameIdx = header.indexOf("name");
+  const findIdx = (...candidates: string[]) =>
+    header.findIndex((h) => candidates.includes(h));
+
+  const nameIdx = findIdx("venuename", "name");
 
   if (nameIdx === -1) {
     redirect(
       `/leads/import?error=${encodeURIComponent(
-        "CSV must have a Name column"
+        "CSV must have a Venue Name column"
       )}`
     );
   }
 
   const phoneIdx = header.indexOf("phone");
   const emailIdx = header.indexOf("email");
-  const companyIdx = header.indexOf("company");
+  const companyIdx = findIdx("location", "company");
   const sourceIdx = header.indexOf("source");
   const statusIdx = header.indexOf("status");
   const assignedIdx = header.findIndex(

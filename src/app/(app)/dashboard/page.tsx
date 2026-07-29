@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
-import { LEAD_STATUSES, type Lead, type Profile } from "@/lib/types/database";
+import {
+  LEAD_STATUSES,
+  repLabel,
+  type Lead,
+  type Profile,
+} from "@/lib/types/database";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -77,7 +82,7 @@ export default async function DashboardPage() {
                   className="flex items-center justify-between text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0"
                 >
                   <span className="text-slate-700">
-                    {rep.full_name ?? rep.id}
+                    {repLabel(rep)}
                   </span>
                   <span className="text-slate-500">{count} leads</span>
                 </li>

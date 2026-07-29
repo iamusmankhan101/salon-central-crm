@@ -11,8 +11,14 @@ export type LeadStatus =
 export interface Profile {
   id: string;
   full_name: string | null;
+  email: string | null;
   role: UserRole;
   created_at: string;
+}
+
+export function repLabel(profile: Profile): string {
+  const name = profile.full_name ?? profile.id;
+  return profile.email ? `${name} (${profile.email})` : name;
 }
 
 export interface Lead {

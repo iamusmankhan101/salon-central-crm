@@ -5,6 +5,7 @@ import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
 import {
   LEAD_STATUSES,
   STATUS_STYLES,
+  repLabel,
   type Lead,
   type LeadStatus,
   type Profile,
@@ -116,7 +117,7 @@ export default async function LeadsPage({
           {searchParams.skipped && searchParams.skipped !== "0"
             ? ` Skipped ${searchParams.skipped} row${
                 searchParams.skipped === "1" ? "" : "s"
-              } without a name.`
+              } without a venue name.`
             : ""}
         </div>
       )}
@@ -158,7 +159,7 @@ export default async function LeadsPage({
               <option value="">All Reps</option>
               {reps.map((rep) => (
                 <option key={rep.id} value={rep.id}>
-                  {rep.full_name ?? rep.id}
+                  {repLabel(rep)}
                 </option>
               ))}
             </select>
@@ -241,9 +242,9 @@ export default async function LeadsPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Venue Name</th>
                 <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Company</th>
+                <th className="px-4 py-3 font-medium">Location</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Assigned</th>
                 <th className="px-4 py-3 font-medium">Created</th>

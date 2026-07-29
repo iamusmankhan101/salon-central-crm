@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
-import type { Profile } from "@/lib/types/database";
+import { repLabel, type Profile } from "@/lib/types/database";
 import { createLead } from "../actions";
 
 export default async function NewLeadPage({
@@ -37,7 +37,7 @@ export default async function NewLeadPage({
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Name *
+            Venue Name *
           </label>
           <input
             name="name"
@@ -70,7 +70,7 @@ export default async function NewLeadPage({
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Company
+            Location
           </label>
           <input
             name="company"
@@ -101,7 +101,7 @@ export default async function NewLeadPage({
             <option value="">Unassigned</option>
             {reps.map((rep) => (
               <option key={rep.id} value={rep.id}>
-                {rep.full_name ?? rep.id}
+                {repLabel(rep)}
               </option>
             ))}
           </select>

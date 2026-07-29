@@ -5,8 +5,8 @@ import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
 import { importLeads } from "../actions";
 
 const TEMPLATE_CSV = [
-  "Name,Phone,Email,Company,Source,Status,Assigned To,Notes",
-  "Jane Doe,555-0100,jane@example.com,Acme Salon,Referral,New,,First contact pending",
+  "Venue Name,Phone,Email,Location,Source,Status,Assigned To,Notes",
+  "Acme Salon,555-0100,jane@example.com,Downtown,Referral,New,,First contact pending",
 ].join("\n");
 
 const TEMPLATE_HREF = `data:text/csv;charset=utf-8,${encodeURIComponent(
@@ -39,12 +39,12 @@ export default async function ImportLeadsPage({
         )}
 
         <p className="text-sm text-slate-500">
-          Upload a CSV with a header row. Only <strong>Name</strong> is
-          required — <code className="text-xs">Phone, Email, Company,
+          Upload a CSV with a header row. Only <strong>Venue Name</strong> is
+          required — <code className="text-xs">Phone, Email, Location,
           Source, Status, Assigned To, Notes</code> are all optional.
-          Rows without a name are skipped. Unrecognized status values default
-          to &ldquo;New&rdquo;; &ldquo;Assigned To&rdquo; is matched against a
-          sales rep&apos;s name (leave blank for unassigned).
+          Rows without a venue name are skipped. Unrecognized status values
+          default to &ldquo;New&rdquo;; &ldquo;Assigned To&rdquo; is matched
+          against a sales rep&apos;s name (leave blank for unassigned).
         </p>
 
         <a
