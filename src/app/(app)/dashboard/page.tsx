@@ -1,26 +1,32 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
-import {
-  LEAD_STATUSES,
-  repLabel,
-  type Lead,
-  type Profile,
-} from "@/lib/types/database";
+import { LEAD_STATUSES, repLabel, type Profile } from "@/lib/types/database";
 
 export default async function DashboardPage() {
   const supabase = createClient();
   const { profile } = await getCurrentUserAndProfile();
   const isAdmin = profile?.role === "admin";
 
-  const { data: leadsData } = await supabase.from("leads").select("*");
-  const leads = (leadsData ?? []) as Lead[];
+  const [totalRes, unassignedRes, ...statusRes] = await Promise.all([
+    supabase.from("leads").select("*", { count: "exact", head: true }),
+    supabase
+      .from("leads")
+      .select("*", { count: "exact", head: true })
+      .is("assigned_to", null),
+    ...LEAD_STATUSES.map((s) =>
+      supabase
+        .from("leads")
+        .select("*", { count: "exact", head: true })
+        .eq("status", s.value)
+    ),
+  ]);
 
-  const counts = LEAD_STATUSES.map((s) => ({
+  const totalCount = totalRes.count ?? 0;
+  const unassignedCount = unassignedRes.count ?? 0;
+  const counts = LEAD_STATUSES.map((s, i) => ({
     ...s,
-    count: leads.filter((l) => l.status === s.value).length,
+    count: statusRes[i].count ?? 0,
   }));
-
-  const unassignedCount = leads.filter((l) => !l.assigned_to).length;
 
   let repBreakdown: { rep: Profile; count: number }[] = [];
   if (isAdmin) {
@@ -29,9 +35,19 @@ export default async function DashboardPage() {
       .select("*")
       .eq("role", "sales_rep");
     const reps = (profilesData ?? []) as Profile[];
-    repBreakdown = reps.map((rep) => ({
+
+    const repCountRes = await Promise.all(
+      reps.map((rep) =>
+        supabase
+          .from("leads")
+          .select("*", { count: "exact", head: true })
+          .eq("assigned_to", rep.id)
+      )
+    );
+
+    repBreakdown = reps.map((rep, i) => ({
       rep,
-      count: leads.filter((l) => l.assigned_to === rep.id).length,
+      count: repCountRes[i].count ?? 0,
     }));
   }
 
@@ -44,7 +60,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-lg p-4 border-t-2 border-t-brand">
           <div className="text-2xl font-semibold text-brand">
-            {leads.length}
+            {totalCount}
           </div>
           <div className="text-sm text-slate-500">Total leads</div>
         </div>
@@ -81,9 +97,7 @@ export default async function DashboardPage() {
                   key={rep.id}
                   className="flex items-center justify-between text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0"
                 >
-                  <span className="text-slate-700">
-                    {repLabel(rep)}
-                  </span>
+                  <span className="text-slate-700">{repLabel(rep)}</span>
                   <span className="text-slate-500">{count} leads</span>
                 </li>
               ))}

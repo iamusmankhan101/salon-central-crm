@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { csvEscape } from "@/lib/csv";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import {
   categoryLabel,
   statusLabel,
@@ -18,17 +19,19 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category");
   const q = searchParams.get("q");
 
-  let query = supabase
-    .from("leads")
-    .select("*")
-    .order("created_at", { ascending: false });
+  let leads = await fetchAllRows<Lead>((from, to) => {
+    let query = supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  if (rep) query = query.eq("assigned_to", rep);
-  if (status) query = query.eq("status", status as LeadStatus);
-  if (category) query = query.eq("category", category as LeadCategory);
+    if (rep) query = query.eq("assigned_to", rep);
+    if (status) query = query.eq("status", status as LeadStatus);
+    if (category) query = query.eq("category", category as LeadCategory);
 
-  const { data: leadsData } = await query;
-  let leads = (leadsData ?? []) as Lead[];
+    return query;
+  });
 
   if (q) {
     const needle = q.toLowerCase();

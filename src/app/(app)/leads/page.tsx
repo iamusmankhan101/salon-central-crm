@@ -16,6 +16,7 @@ import {
 } from "@/lib/types/database";
 import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { formatCardDate } from "@/lib/format";
+import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import { StatusSelect } from "./status-select";
 import { AssignSelect } from "./assign-select";
 import { claimLead } from "./actions";
@@ -37,23 +38,25 @@ export default async function LeadsPage({
   const { profile } = await getCurrentUserAndProfile();
   const isAdmin = profile?.role === "admin";
 
-  let query = supabase
-    .from("leads")
-    .select("*")
-    .order("created_at", { ascending: false });
+  let leads = await fetchAllRows<Lead>((from, to) => {
+    let query = supabase
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  if (isAdmin && searchParams.rep) {
-    query = query.eq("assigned_to", searchParams.rep);
-  }
-  if (searchParams.status) {
-    query = query.eq("status", searchParams.status as LeadStatus);
-  }
-  if (searchParams.category) {
-    query = query.eq("category", searchParams.category as LeadCategory);
-  }
+    if (isAdmin && searchParams.rep) {
+      query = query.eq("assigned_to", searchParams.rep);
+    }
+    if (searchParams.status) {
+      query = query.eq("status", searchParams.status as LeadStatus);
+    }
+    if (searchParams.category) {
+      query = query.eq("category", searchParams.category as LeadCategory);
+    }
 
-  const { data: leadsData } = await query;
-  let leads = (leadsData ?? []) as Lead[];
+    return query;
+  });
 
   if (searchParams.q) {
     const q = searchParams.q.toLowerCase();
