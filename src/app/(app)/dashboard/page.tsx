@@ -9,10 +9,12 @@ export default async function DashboardPage() {
 
   const [totalRes, unassignedRes, ...statusRes] = await Promise.all([
     supabase.from("leads").select("*", { count: "exact", head: true }),
-    supabase
-      .from("leads")
-      .select("*", { count: "exact", head: true })
-      .is("assigned_to", null),
+    isAdmin
+      ? supabase
+          .from("leads")
+          .select("*", { count: "exact", head: true })
+          .is("assigned_to", null)
+      : Promise.resolve({ count: null }),
     ...LEAD_STATUSES.map((s) =>
       supabase
         .from("leads")
@@ -64,12 +66,14 @@ export default async function DashboardPage() {
           </div>
           <div className="text-sm text-slate-500">Total leads</div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 border-t-2 border-t-brand-indigo">
-          <div className="text-2xl font-semibold text-brand-indigo">
-            {unassignedCount}
+        {isAdmin && (
+          <div className="bg-white border border-slate-200 rounded-lg p-4 border-t-2 border-t-brand-indigo">
+            <div className="text-2xl font-semibold text-brand-indigo">
+              {unassignedCount}
+            </div>
+            <div className="text-sm text-slate-500">Unassigned</div>
           </div>
-          <div className="text-sm text-slate-500">Unassigned</div>
-        </div>
+        )}
         {counts.map((s) => (
           <div
             key={s.value}

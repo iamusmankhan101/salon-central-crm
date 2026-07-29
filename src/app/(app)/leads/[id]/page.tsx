@@ -12,7 +12,7 @@ import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { StatusSelect } from "../status-select";
 import { AssignSelect } from "../assign-select";
 import { CategorySelect } from "../category-select";
-import { claimLead, logCall, updateLeadNotes } from "../actions";
+import { logCall, updateLeadNotes } from "../actions";
 
 export default async function LeadDetailPage({
   params,
@@ -99,21 +99,15 @@ export default async function LeadDetailPage({
                 assignedTo={typedLead.assigned_to}
                 reps={reps}
               />
-            ) : typedLead.assigned_to ? (
-              <span className="text-slate-500 text-xs">
-                Assigned to{" "}
-                {profileMap.get(typedLead.assigned_to)?.full_name ??
-                  "you"}
-              </span>
             ) : (
-              <form action={claimLead.bind(null, typedLead.id)}>
-                <button
-                  type="submit"
-                  className="text-xs text-brand underline underline-offset-2 hover:text-brand-dark"
-                >
-                  Claim lead
-                </button>
-              </form>
+              <span className="text-slate-500 text-xs">
+                {typedLead.assigned_to
+                  ? `Assigned to ${
+                      profileMap.get(typedLead.assigned_to)?.full_name ??
+                      "you"
+                    }`
+                  : "Unassigned"}
+              </span>
             )}
           </div>
         </div>

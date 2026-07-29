@@ -27,7 +27,6 @@ import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { formatCardDate } from "@/lib/format";
 import { StatusSelect } from "./status-select";
 import { AssignSelect } from "./assign-select";
-import { claimLead } from "./actions";
 
 const PAGE_SIZE = 50;
 const BOARD_CARD_LIMIT = 30;
@@ -549,22 +548,11 @@ function AssignedControl({
     );
   }
 
-  if (lead.assigned_to) {
-    return (
-      <span className="text-slate-500">
-        {profileMap.get(lead.assigned_to)?.full_name ?? "Assigned"}
-      </span>
-    );
-  }
-
   return (
-    <form action={claimLead.bind(null, lead.id)}>
-      <button
-        type="submit"
-        className="text-brand underline underline-offset-2 hover:text-brand-dark"
-      >
-        Claim lead
-      </button>
-    </form>
+    <span className="text-slate-500">
+      {lead.assigned_to
+        ? profileMap.get(lead.assigned_to)?.full_name ?? "Assigned"
+        : "Unassigned"}
+    </span>
   );
 }

@@ -76,23 +76,6 @@ export async function assignLead(leadId: string, repId: string | null) {
   revalidatePath("/dashboard");
 }
 
-export async function claimLead(leadId: string) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  await supabase
-    .from("leads")
-    .update({ assigned_to: user.id })
-    .eq("id", leadId);
-
-  revalidatePath("/leads");
-  revalidatePath(`/leads/${leadId}`);
-  revalidatePath("/dashboard");
-}
-
 export async function logCall(formData: FormData) {
   const supabase = createClient();
   const {

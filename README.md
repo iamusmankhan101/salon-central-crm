@@ -33,7 +33,7 @@ This creates:
 - `profiles` (role: `admin` or `sales_rep`, auto-created whenever a new user signs up)
 - `leads` (with a `status` pipeline field)
 - `call_logs` (a timestamped record of every logged call)
-- Row Level Security policies so sales reps only see leads assigned to them plus the unassigned pool, while admins see everything.
+- Row Level Security policies so sales reps only see leads assigned to them, while admins see everything (including the unassigned pool).
 
 ## 4. Create your users
 
@@ -43,7 +43,7 @@ There's no public sign-up page on purpose — accounts are created by you so onl
 2. Every new user automatically gets a row in `profiles` with `role = sales_rep`.
 3. To make yourself an admin, go to **Table Editor → profiles**, find your row, and change `role` to `admin`.
 
-Admins can add leads and assign/reassign them to any rep. Sales reps can see leads assigned to them, claim unassigned leads, log calls, and move leads through the pipeline — but can't reassign a lead to a teammate.
+Admins add leads and assign them to reps (unassigned leads are admin-only). Sales reps only see leads assigned to them — they log calls and move their leads through the pipeline, but can't see the unassigned pool or reassign a lead to a teammate.
 
 ## 5. Run the app
 
