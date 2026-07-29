@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import {
+  statusLabel,
+  type Lead,
+  type LeadStatus,
+  type Profile,
+} from "@/lib/types/database";
+
+function csvEscape(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+export async function GET(request: NextRequest) {
+  const supabase = createClient();
+  const { searchParams } = new URL(request.url);
+  const rep = searchParams.get("rep");
+  const status = searchParams.get("status");
+  const q = searchParams.get("q");
+
+  let query = supabase
+    .from("leads")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (rep) query = query.eq("assigned_to", rep);
+  if (status) query = query.eq("status", status as LeadStatus);
+
+  const { data: leadsData } = await query;
+  let leads = (leadsData ?? []) as Lead[];
+
+  if (q) {
+    const needle = q.toLowerCase();
+    leads = leads.filter(
+      (l) =>
+        l.name.toLowerCase().includes(needle) ||
+        (l.phone ?? "").toLowerCase().includes(needle) ||
+        (l.email ?? "").toLowerCase().includes(needle) ||
+        (l.company ?? "").toLowerCase().includes(needle)
+    );
+  }
+
+  const { data: profilesData } = await supabase.from("profiles").select("*");
+  const profileMap = new Map(
+    ((profilesData ?? []) as Profile[]).map((p) => [p.id, p])
+  );
+
+  const header = [
+    "Name",
+    "Phone",
+    "Email",
+    "Company",
+    "Source",
+    "Status",
+    "Assigned To",
+    "Notes",
+    "Created At",
+  ];
+
+  const rows = leads.map((l) => [
+    l.name,
+    l.phone ?? "",
+    l.email ?? "",
+    l.company ?? "",
+    l.source ?? "",
+    statusLabel(l.status),
+    l.assigned_to
+      ? profileMap.get(l.assigned_to)?.full_name ?? ""
+      : "Unassigned",
+    l.notes ?? "",
+    new Date(l.created_at).toLocaleString(),
+  ]);
+
+  const csv = [header, ...rows]
+    .map((row) => row.map(csvEscape).join(","))
+    .join("\n");
+
+  return new NextResponse(csv, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="leads-${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv"`,
+    },
+  });
+}

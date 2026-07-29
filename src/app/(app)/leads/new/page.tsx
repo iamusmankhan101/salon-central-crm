@@ -42,7 +42,7 @@ export default async function NewLeadPage({
           <input
             name="name"
             required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
         </div>
 
@@ -53,7 +53,7 @@ export default async function NewLeadPage({
             </label>
             <input
               name="phone"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
           <div>
@@ -63,7 +63,7 @@ export default async function NewLeadPage({
             <input
               name="email"
               type="email"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
         </div>
@@ -74,7 +74,7 @@ export default async function NewLeadPage({
           </label>
           <input
             name="company"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
         </div>
 
@@ -85,7 +85,7 @@ export default async function NewLeadPage({
           <input
             name="source"
             placeholder="e.g. website, referral, walk-in"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
         </div>
 
@@ -114,13 +114,13 @@ export default async function NewLeadPage({
           <textarea
             name="notes"
             rows={3}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
         </div>
 
         <button
           type="submit"
-          className="w-full rounded-md bg-slate-900 text-white text-sm font-medium py-2 hover:bg-slate-800 transition"
+          className="w-full rounded-md bg-gradient-to-r from-brand to-brand-indigo text-white text-sm font-medium py-2 shadow-sm shadow-brand/30 hover:opacity-95 transition"
         >
           Add Lead
         </button>

@@ -8,6 +8,7 @@ import {
   type Lead,
   type Profile,
 } from "@/lib/types/database";
+import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { StatusSelect } from "../status-select";
 import { AssignSelect } from "../assign-select";
 import { claimLead, logCall, updateLeadNotes } from "../actions";
@@ -51,26 +52,35 @@ export default async function LeadDetailPage({
 
       <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
         <div className="flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-xl font-semibold">{typedLead.name}</h1>
-            <div className="text-sm text-slate-500 mt-1 space-y-0.5">
-              {typedLead.phone && (
-                <div>
-                  <a
-                    href={`tel:${typedLead.phone}`}
-                    className="text-slate-900 hover:underline"
-                  >
-                    {typedLead.phone}
-                  </a>
-                </div>
-              )}
-              {typedLead.email && <div>{typedLead.email}</div>}
-              {typedLead.company && <div>{typedLead.company}</div>}
-              {typedLead.source && (
-                <div className="text-xs text-slate-400">
-                  Source: {typedLead.source}
-                </div>
-              )}
+          <div className="flex items-start gap-3">
+            <span
+              className={`h-11 w-11 rounded-full ${getAvatarColor(
+                typedLead.name
+              )} text-white text-sm font-semibold flex items-center justify-center flex-shrink-0`}
+            >
+              {getInitials(typedLead.name)}
+            </span>
+            <div>
+              <h1 className="text-xl font-semibold">{typedLead.name}</h1>
+              <div className="text-sm text-slate-500 mt-1 space-y-0.5">
+                {typedLead.phone && (
+                  <div>
+                    <a
+                      href={`tel:${typedLead.phone}`}
+                      className="text-slate-900 hover:text-brand hover:underline"
+                    >
+                      {typedLead.phone}
+                    </a>
+                  </div>
+                )}
+                {typedLead.email && <div>{typedLead.email}</div>}
+                {typedLead.company && <div>{typedLead.company}</div>}
+                {typedLead.source && (
+                  <div className="text-xs text-slate-400">
+                    Source: {typedLead.source}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -92,7 +102,7 @@ export default async function LeadDetailPage({
               <form action={claimLead.bind(null, typedLead.id)}>
                 <button
                   type="submit"
-                  className="text-xs text-slate-900 underline underline-offset-2"
+                  className="text-xs text-brand underline underline-offset-2 hover:text-brand-dark"
                 >
                   Claim lead
                 </button>
@@ -114,11 +124,11 @@ export default async function LeadDetailPage({
             name="notes"
             rows={3}
             defaultValue={typedLead.notes ?? ""}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
           />
           <button
             type="submit"
-            className="rounded-md bg-slate-100 text-slate-700 text-sm px-4 py-1.5 hover:bg-slate-200"
+            className="rounded-md bg-brand-50 text-brand-dark text-sm px-4 py-1.5 hover:bg-brand-100 transition"
           >
             Save notes
           </button>
@@ -137,7 +147,7 @@ export default async function LeadDetailPage({
               <input
                 name="outcome"
                 placeholder="e.g. No answer, left voicemail"
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
               />
             </div>
             <div>
@@ -164,12 +174,12 @@ export default async function LeadDetailPage({
               name="notes"
               rows={2}
               placeholder="What happened on the call?"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
             />
           </div>
           <button
             type="submit"
-            className="rounded-md bg-slate-900 text-white text-sm px-4 py-1.5 hover:bg-slate-800"
+            className="rounded-md bg-gradient-to-r from-brand to-brand-indigo text-white text-sm px-4 py-1.5 shadow-sm shadow-brand/30 hover:opacity-95 transition"
           >
             Log Call
           </button>

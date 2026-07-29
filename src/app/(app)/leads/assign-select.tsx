@@ -25,7 +25,7 @@ export function AssignSelect({
           assignLead(leadId, next);
         });
       }}
-      className="text-sm rounded-md border border-slate-300 px-2 py-1 bg-white disabled:opacity-50"
+      className="text-xs rounded-md border border-slate-200 px-1.5 py-1 bg-white text-slate-500 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
     >
       <option value="">Unassigned</option>
       {reps.map((rep) => (

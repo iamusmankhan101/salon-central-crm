@@ -37,14 +37,14 @@ export default async function DashboardPage() {
       </h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-2xl font-semibold text-slate-900">
+        <div className="bg-white border border-slate-200 rounded-lg p-4 border-t-2 border-t-brand">
+          <div className="text-2xl font-semibold text-brand">
             {leads.length}
           </div>
           <div className="text-sm text-slate-500">Total leads</div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="text-2xl font-semibold text-slate-900">
+        <div className="bg-white border border-slate-200 rounded-lg p-4 border-t-2 border-t-brand-indigo">
+          <div className="text-2xl font-semibold text-brand-indigo">
             {unassignedCount}
           </div>
           <div className="text-sm text-slate-500">Unassigned</div>

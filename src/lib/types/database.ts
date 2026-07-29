@@ -53,3 +53,44 @@ export const LEAD_STATUSES: { value: LeadStatus; label: string }[] = [
 export function statusLabel(status: LeadStatus): string {
   return LEAD_STATUSES.find((s) => s.value === status)?.label ?? status;
 }
+
+export const STATUS_STYLES: Record<
+  LeadStatus,
+  { dot: string; badgeBg: string; badgeText: string }
+> = {
+  new: {
+    dot: "bg-slate-400",
+    badgeBg: "bg-slate-100",
+    badgeText: "text-slate-600",
+  },
+  contacted: {
+    dot: "bg-sky-400",
+    badgeBg: "bg-sky-50",
+    badgeText: "text-sky-700",
+  },
+  interested: {
+    dot: "bg-brand-light",
+    badgeBg: "bg-brand-50",
+    badgeText: "text-brand-dark",
+  },
+  follow_up: {
+    dot: "bg-amber-400",
+    badgeBg: "bg-amber-50",
+    badgeText: "text-amber-700",
+  },
+  not_interested: {
+    dot: "bg-rose-400",
+    badgeBg: "bg-rose-50",
+    badgeText: "text-rose-600",
+  },
+  won: {
+    dot: "bg-emerald-500",
+    badgeBg: "bg-emerald-50",
+    badgeText: "text-emerald-700",
+  },
+  lost: {
+    dot: "bg-slate-500",
+    badgeBg: "bg-slate-200",
+    badgeText: "text-slate-700",
+  },
+};

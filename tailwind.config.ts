@@ -5,12 +5,21 @@ const config: Config = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        brand: {
+          DEFAULT: "#7C3AED",
+          dark: "#5B21B6",
+          light: "#9061F9",
+          indigo: "#4F46E5",
+          50: "#F5F3FF",
+          100: "#EDE9FE",
+        },
       },
     },
   },
