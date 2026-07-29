@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { Download, Phone, Mail, Plus, Search, Upload } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Phone,
+  Mail,
+  Plus,
+  Search,
+  Upload,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
 import {
@@ -16,65 +25,113 @@ import {
 } from "@/lib/types/database";
 import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { formatCardDate } from "@/lib/format";
-import { fetchAllRows } from "@/lib/supabase/fetch-all";
 import { StatusSelect } from "./status-select";
 import { AssignSelect } from "./assign-select";
 import { claimLead } from "./actions";
 
+const PAGE_SIZE = 50;
+const BOARD_CARD_LIMIT = 30;
+
+type LeadsSearchParams = {
+  view?: string;
+  rep?: string;
+  q?: string;
+  status?: string;
+  category?: string;
+  page?: string;
+  imported?: string;
+  skipped?: string;
+};
+
+/** Escapes characters that are structurally significant in a PostgREST
+ * `.or()` filter string (comma separates conditions, parens group them) so
+ * user search input can't alter which columns/rows are being matched. */
+function sanitizeForOr(value: string): string {
+  return value.replace(/[,()"]/g, "");
+}
+
+function applySharedFilters(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  query: any,
+  searchParams: LeadsSearchParams,
+  isAdmin: boolean
+) {
+  if (isAdmin && searchParams.rep) {
+    query = query.eq("assigned_to", searchParams.rep);
+  }
+  if (searchParams.category) {
+    query = query.eq("category", searchParams.category as LeadCategory);
+  }
+  const term = searchParams.q ? sanitizeForOr(searchParams.q.trim()) : "";
+  if (term) {
+    query = query.or(
+      `name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%,company.ilike.%${term}%`
+    );
+  }
+  return query;
+}
+
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: {
-    view?: string;
-    rep?: string;
-    q?: string;
-    status?: string;
-    category?: string;
-    imported?: string;
-    skipped?: string;
-  };
+  searchParams: LeadsSearchParams;
 }) {
   const supabase = createClient();
   const { profile } = await getCurrentUserAndProfile();
   const isAdmin = profile?.role === "admin";
 
-  let leads = await fetchAllRows<Lead>((from, to) => {
-    let query = supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(from, to);
-
-    if (isAdmin && searchParams.rep) {
-      query = query.eq("assigned_to", searchParams.rep);
-    }
-    if (searchParams.status) {
-      query = query.eq("status", searchParams.status as LeadStatus);
-    }
-    if (searchParams.category) {
-      query = query.eq("category", searchParams.category as LeadCategory);
-    }
-
-    return query;
-  });
-
-  if (searchParams.q) {
-    const q = searchParams.q.toLowerCase();
-    leads = leads.filter(
-      (l) =>
-        l.name.toLowerCase().includes(q) ||
-        (l.phone ?? "").toLowerCase().includes(q) ||
-        (l.email ?? "").toLowerCase().includes(q) ||
-        (l.company ?? "").toLowerCase().includes(q)
-    );
-  }
+  const view = searchParams.view === "list" ? "list" : "board";
 
   const { data: profilesData } = await supabase.from("profiles").select("*");
   const profiles = (profilesData ?? []) as Profile[];
   const profileMap = new Map(profiles.map((p) => [p.id, p]));
   const reps = profiles.filter((p) => p.role === "sales_rep");
 
-  const view = searchParams.view === "list" ? "list" : "board";
+  let boardColumns: { status: LeadStatus; leads: Lead[]; total: number }[] =
+    [];
+  let listLeads: Lead[] = [];
+  let listTotal = 0;
+  let page = 1;
+  let totalPages = 1;
+
+  if (view === "board") {
+    boardColumns = await Promise.all(
+      LEAD_STATUSES.map(async (s) => {
+        if (searchParams.status && searchParams.status !== s.value) {
+          return { status: s.value, leads: [] as Lead[], total: 0 };
+        }
+        let query = supabase
+          .from("leads")
+          .select("*", { count: "exact" })
+          .eq("status", s.value)
+          .order("created_at", { ascending: false })
+          .range(0, BOARD_CARD_LIMIT - 1);
+        query = applySharedFilters(query, searchParams, isAdmin);
+        const { data, count } = await query;
+        return {
+          status: s.value,
+          leads: (data ?? []) as Lead[],
+          total: count ?? 0,
+        };
+      })
+    );
+  } else {
+    page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+    let query = supabase
+      .from("leads")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+    query = applySharedFilters(query, searchParams, isAdmin);
+    if (searchParams.status) {
+      query = query.eq("status", searchParams.status as LeadStatus);
+    }
+    const { data, count } = await query;
+    listLeads = (data ?? []) as Lead[];
+    listTotal = count ?? 0;
+    totalPages = Math.max(1, Math.ceil(listTotal / PAGE_SIZE));
+    if (page > totalPages) page = totalPages;
+  }
 
   const buildParams = (overrides: Record<string, string>) => {
     const params = new URLSearchParams();
@@ -87,6 +144,7 @@ export default async function LeadsPage({
     if (q) params.set("q", q);
     if (status) params.set("status", status);
     if (category) params.set("category", category);
+    if (overrides.page) params.set("page", overrides.page);
     return params.toString();
   };
 
@@ -136,10 +194,7 @@ export default async function LeadsPage({
       )}
 
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <form
-          method="get"
-          className="flex flex-wrap items-center gap-2"
-        >
+        <form method="get" className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="view" value={view} />
           <div className="relative">
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -223,23 +278,21 @@ export default async function LeadsPage({
 
       {view === "board" ? (
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {LEAD_STATUSES.map((s) => {
-            const columnLeads = leads.filter((l) => l.status === s.value);
+          {boardColumns.map(({ status, leads: columnLeads, total }) => {
+            const s = LEAD_STATUSES.find((x) => x.value === status)!;
             return (
-              <div key={s.value} className="w-72 flex-shrink-0">
+              <div key={status} className="w-72 flex-shrink-0">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`h-2 w-2 rounded-full ${
-                        STATUS_STYLES[s.value].dot
-                      }`}
+                      className={`h-2 w-2 rounded-full ${STATUS_STYLES[status].dot}`}
                     />
                     <h2 className="text-sm font-semibold text-slate-700">
                       {s.label}
                     </h2>
                   </div>
                   <span className="text-xs font-medium text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">
-                    {columnLeads.length} {columnLeads.length === 1 ? "Lead" : "Leads"}
+                    {total} {total === 1 ? "Lead" : "Leads"}
                   </span>
                 </div>
                 <div className="space-y-3">
@@ -257,84 +310,148 @@ export default async function LeadsPage({
                       No leads
                     </div>
                   )}
+                  {total > columnLeads.length && (
+                    <Link
+                      href={`/leads?${buildParams({
+                        view: "list",
+                        status,
+                      })}`}
+                      className="block text-xs text-brand hover:text-brand-dark text-center py-2"
+                    >
+                      +{total - columnLeads.length} more — view in list
+                    </Link>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
-                <th className="px-4 py-3 font-medium">Venue Name</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Location</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Assigned</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead) => (
-                <tr key={lead.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/leads/${lead.id}`}
-                      className="flex items-center gap-2.5 group"
-                    >
-                      <span
-                        className={`h-7 w-7 rounded-full ${getAvatarColor(
-                          lead.name
-                        )} text-white text-[10px] font-semibold flex items-center justify-center flex-shrink-0`}
-                      >
-                        {getInitials(lead.name)}
-                      </span>
-                      <span className="font-medium text-slate-900 group-hover:text-brand">
-                        {lead.name}
-                      </span>
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{lead.phone ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {lead.company ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {lead.category ? (
-                      <CategoryBadge category={lead.category} />
-                    ) : (
-                      <span className="text-slate-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusSelect leadId={lead.id} status={lead.status} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <AssignedControl
-                      lead={lead}
-                      isAdmin={isAdmin}
-                      reps={reps}
-                      profileMap={profileMap}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {new Date(lead.created_at).toLocaleDateString()}
-                  </td>
+        <div className="space-y-3">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-slate-500 border-b border-slate-200">
+                  <th className="px-4 py-3 font-medium">Venue Name</th>
+                  <th className="px-4 py-3 font-medium">Phone</th>
+                  <th className="px-4 py-3 font-medium">Location</th>
+                  <th className="px-4 py-3 font-medium">Category</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Assigned</th>
+                  <th className="px-4 py-3 font-medium">Created</th>
                 </tr>
-              ))}
-              {leads.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-slate-400"
+              </thead>
+              <tbody>
+                {listLeads.map((lead) => (
+                  <tr
+                    key={lead.id}
+                    className="border-b border-slate-100 last:border-0"
                   >
-                    No leads found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/leads/${lead.id}`}
+                        className="flex items-center gap-2.5 group"
+                      >
+                        <span
+                          className={`h-7 w-7 rounded-full ${getAvatarColor(
+                            lead.name
+                          )} text-white text-[10px] font-semibold flex items-center justify-center flex-shrink-0`}
+                        >
+                          {getInitials(lead.name)}
+                        </span>
+                        <span className="font-medium text-slate-900 group-hover:text-brand">
+                          {lead.name}
+                        </span>
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {lead.phone ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {lead.company ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {lead.category ? (
+                        <CategoryBadge category={lead.category} />
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusSelect leadId={lead.id} status={lead.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <AssignedControl
+                        lead={lead}
+                        isAdmin={isAdmin}
+                        reps={reps}
+                        profileMap={profileMap}
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {new Date(lead.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+                {listLeads.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-8 text-center text-slate-400"
+                    >
+                      No leads found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {listTotal > 0 && (
+            <div className="flex items-center justify-between text-sm text-slate-500 px-1">
+              <span>
+                Showing {(page - 1) * PAGE_SIZE + 1}–
+                {Math.min(page * PAGE_SIZE, listTotal)} of {listTotal}
+              </span>
+              <div className="flex items-center gap-2">
+                {page > 1 ? (
+                  <Link
+                    href={`/leads?${buildParams({
+                      page: String(page - 1),
+                    })}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 transition"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Prev
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 px-3 py-1.5">
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Prev
+                  </span>
+                )}
+                <span className="px-1">
+                  Page {page} of {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <Link
+                    href={`/leads?${buildParams({
+                      page: String(page + 1),
+                    })}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 transition"
+                  >
+                    Next
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 px-3 py-1.5">
+                    Next
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
