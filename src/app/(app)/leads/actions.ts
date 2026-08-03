@@ -195,11 +195,11 @@ export async function importLeads(formData: FormData) {
     );
   }
 
-  const phoneIdx = header.indexOf("phone");
-  const emailIdx = header.indexOf("email");
+  const phoneIdx = findIdx("phone", "phonenumber", "contactnumber", "mobile", "cell");
+  const emailIdx = findIdx("email", "emailaddress");
   const companyIdx = findIdx("location", "company");
-  const sourceIdx = header.indexOf("source");
-  const statusIdx = header.indexOf("status");
+  const sourceIdx = findIdx("source", "leadsource");
+  const statusIdx = findIdx("status", "leadstatus", "stage");
   const categoryIdx = header.indexOf("category");
   const assignedIdx = header.findIndex(
     (h) => h === "assignedto" || h === "assignee" || h === "rep"

@@ -490,20 +490,22 @@ function LeadCard({
 
       {lead.category && <CategoryBadge category={lead.category} />}
 
-      <div className="text-xs text-slate-500 space-y-1">
-        {lead.phone && (
-          <div className="flex items-center gap-1.5">
-            <Phone className="h-3 w-3 text-slate-400" />
-            {lead.phone}
-          </div>
-        )}
-        {lead.email && (
-          <div className="flex items-center gap-1.5 truncate">
-            <Mail className="h-3 w-3 text-slate-400 flex-shrink-0" />
-            <span className="truncate">{lead.email}</span>
-          </div>
-        )}
-      </div>
+      {(lead.phone || lead.email) && (
+        <div className="text-xs text-slate-500 space-y-1">
+          {lead.phone && (
+            <div className="flex items-center gap-1.5">
+              <Phone className="h-3 w-3 text-slate-400" />
+              {lead.phone}
+            </div>
+          )}
+          {lead.email && (
+            <div className="flex items-center gap-1.5 truncate">
+              <Mail className="h-3 w-3 text-slate-400 flex-shrink-0" />
+              <span className="truncate">{lead.email}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between pt-1 border-t border-slate-100">
         <StatusSelect leadId={lead.id} status={lead.status} />
