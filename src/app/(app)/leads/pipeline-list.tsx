@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -35,12 +35,17 @@ export function PipelineList({
   buildParamsStr: (overrides: Record<string, string>) => string;
   PAGE_SIZE: number;
 }) {
-  const [optimisticLeads, addOptimisticUpdate] = useOptimistic(
-    initialLeads,
-    (state: Lead[], update: { id: string; partial: Partial<Lead> }) => {
-      return state.map((l) => (l.id === update.id ? { ...l, ...update.partial } : l));
-    }
-  );
+  const [leads, setLeads] = useState(initialLeads);
+
+  useEffect(() => {
+    setLeads(initialLeads);
+  }, [initialLeads]);
+
+  const addOptimisticUpdate = (update: { id: string; partial: Partial<Lead> }) => {
+    setLeads((state) =>
+      state.map((l) => (l.id === update.id ? { ...l, ...update.partial } : l))
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -58,7 +63,7 @@ export function PipelineList({
             </tr>
           </thead>
           <tbody>
-            {optimisticLeads.map((lead) => (
+            {leads.map((lead) => (
               <tr key={lead.id} className="border-b border-slate-100 last:border-0">
                 <td className="px-4 py-3">
                   <Link href={`/leads/${lead.id}`} className="flex items-center gap-2.5 group">
@@ -106,7 +111,7 @@ export function PipelineList({
                 </td>
               </tr>
             ))}
-            {optimisticLeads.length === 0 && (
+            {leads.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
                   No leads found
@@ -118,7 +123,7 @@ export function PipelineList({
       </div>
 
       <div className="md:hidden space-y-3">
-        {optimisticLeads.map((lead) => (
+        {leads.map((lead) => (
           <div
             key={lead.id}
             className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
@@ -175,7 +180,7 @@ export function PipelineList({
             </div>
           </div>
         ))}
-        {optimisticLeads.length === 0 && (
+        {leads.length === 0 && (
           <div className="text-center text-slate-400 text-sm py-8">
             No leads found
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Phone, Mail } from "lucide-react";
 import {
@@ -37,9 +37,14 @@ export function PipelineBoard({
   profileMap: Map<string, Profile>;
   buildParamsStr: (status: LeadStatus) => string;
 }) {
-  const [optimisticColumns, addOptimisticUpdate] = useOptimistic(
-    initialColumns,
-    (state: BoardColumn[], update: { id: string; partial: Partial<Lead> }) => {
+  const [columns, setColumns] = useState(initialColumns);
+
+  useEffect(() => {
+    setColumns(initialColumns);
+  }, [initialColumns]);
+
+  const addOptimisticUpdate = (update: { id: string; partial: Partial<Lead> }) => {
+    setColumns((state) => {
       let oldStatus: LeadStatus | undefined;
       for (const col of state) {
         if (col.leads.find((l) => l.id === update.id)) {
@@ -80,12 +85,12 @@ export function PipelineBoard({
         }
         return col;
       });
-    }
-  );
+    });
+  };
 
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
-      {optimisticColumns.map(({ status, leads: columnLeads, total }) => {
+      {columns.map(({ status, leads: columnLeads, total }) => {
         const s = LEAD_STATUSES.find((x) => x.value === status)!;
         return (
           <div key={status} className="w-72 flex-shrink-0">
