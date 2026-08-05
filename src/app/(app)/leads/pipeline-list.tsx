@@ -14,6 +14,14 @@ import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { StatusSelect } from "./status-select";
 import { AssignSelect } from "./assign-select";
 
+function withParams(base: string, overrides: Record<string, string>) {
+  const params = new URLSearchParams(base);
+  for (const [key, value] of Object.entries(overrides)) {
+    params.set(key, value);
+  }
+  return params.toString();
+}
+
 export function PipelineList({
   initialLeads,
   isAdmin,
@@ -22,7 +30,7 @@ export function PipelineList({
   listTotal,
   page,
   totalPages,
-  buildParamsStr,
+  baseParams,
   PAGE_SIZE,
 }: {
   initialLeads: Lead[];
@@ -32,7 +40,7 @@ export function PipelineList({
   listTotal: number;
   page: number;
   totalPages: number;
-  buildParamsStr: (overrides: Record<string, string>) => string;
+  baseParams: string;
   PAGE_SIZE: number;
 }) {
   const [leads, setLeads] = useState(initialLeads);
@@ -195,7 +203,9 @@ export function PipelineList({
           <div className="flex items-center gap-2">
             {page > 1 ? (
               <Link
-                href={buildParamsStr({ page: String(page - 1) })}
+                href={`/leads?${withParams(baseParams, {
+                  page: String(page - 1),
+                })}`}
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 transition"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -212,7 +222,9 @@ export function PipelineList({
             </span>
             {page < totalPages ? (
               <Link
-                href={buildParamsStr({ page: String(page + 1) })}
+                href={`/leads?${withParams(baseParams, {
+                  page: String(page + 1),
+                })}`}
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 transition"
               >
                 Next

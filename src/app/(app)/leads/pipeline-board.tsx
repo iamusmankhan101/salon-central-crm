@@ -24,18 +24,26 @@ export type BoardColumn = {
   total: number;
 };
 
+function withParams(base: string, overrides: Record<string, string>) {
+  const params = new URLSearchParams(base);
+  for (const [key, value] of Object.entries(overrides)) {
+    params.set(key, value);
+  }
+  return params.toString();
+}
+
 export function PipelineBoard({
   initialColumns,
   isAdmin,
   reps,
   profileMap,
-  buildParamsStr,
+  baseParams,
 }: {
   initialColumns: BoardColumn[];
   isAdmin: boolean;
   reps: Profile[];
   profileMap: Map<string, Profile>;
-  buildParamsStr: (status: LeadStatus) => string;
+  baseParams: string;
 }) {
   const [columns, setColumns] = useState(initialColumns);
 
@@ -121,7 +129,10 @@ export function PipelineBoard({
               )}
               {total > columnLeads.length && (
                 <Link
-                  href={buildParamsStr(status)}
+                  href={`/leads?${withParams(baseParams, {
+                    view: "list",
+                    status,
+                  })}`}
                   className="block text-xs text-brand hover:text-brand-dark text-center py-2"
                 >
                   +{total - columnLeads.length} more — view in list

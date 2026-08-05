@@ -133,6 +133,8 @@ export default async function LeadsPage({
     return params.toString();
   };
 
+  const baseParams = buildParams({});
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -294,9 +296,7 @@ export default async function LeadsPage({
           isAdmin={isAdmin}
           reps={reps}
           profileMap={profileMap}
-          buildParamsStr={(status) =>
-            `/leads?${buildParams({ view: "list", status })}`
-          }
+          baseParams={baseParams}
         />
       ) : (
         <PipelineList
@@ -307,7 +307,7 @@ export default async function LeadsPage({
           listTotal={listTotal}
           page={page}
           totalPages={totalPages}
-          buildParamsStr={buildParams}
+          baseParams={baseParams}
           PAGE_SIZE={PAGE_SIZE}
         />
       )}
