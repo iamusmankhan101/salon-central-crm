@@ -12,9 +12,11 @@ import { updateLeadCategory } from "./actions";
 export function CategorySelect({
   leadId,
   category,
+  onChangeOptimistic,
 }: {
   leadId: string;
   category: LeadCategory | null;
+  onChangeOptimistic?: (category: LeadCategory | null) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const style = category
@@ -26,10 +28,11 @@ export function CategorySelect({
       className={`relative inline-flex items-center rounded-full ${style.badgeBg} ${style.badgeText} disabled:opacity-50`}
     >
       <select
-        defaultValue={category ?? ""}
+        value={category ?? ""}
         disabled={isPending}
         onChange={(e) => {
           const next = (e.target.value || null) as LeadCategory | null;
+          if (onChangeOptimistic) onChangeOptimistic(next);
           startTransition(() => {
             updateLeadCategory(leadId, next);
           });

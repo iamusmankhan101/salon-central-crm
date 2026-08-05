@@ -12,9 +12,11 @@ import { updateLeadStatus } from "./actions";
 export function StatusSelect({
   leadId,
   status,
+  onChangeOptimistic,
 }: {
   leadId: string;
   status: LeadStatus;
+  onChangeOptimistic?: (status: LeadStatus) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const style = STATUS_STYLES[status];
@@ -25,10 +27,11 @@ export function StatusSelect({
     >
       <span className={`ml-2.5 h-1.5 w-1.5 rounded-full ${style.dot}`} />
       <select
-        defaultValue={status}
+        value={status}
         disabled={isPending}
         onChange={(e) => {
           const next = e.target.value as LeadStatus;
+          if (onChangeOptimistic) onChangeOptimistic(next);
           startTransition(() => {
             updateLeadStatus(leadId, next);
           });

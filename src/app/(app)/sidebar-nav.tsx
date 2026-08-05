@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users } from "lucide-react";
-
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/leads", label: "Leads", icon: Users },
-];
+import { NAV_ITEMS, isNavActive } from "./nav-items";
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -15,10 +10,7 @@ export function SidebarNav() {
   return (
     <nav className="flex-1 px-3 space-y-1">
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-        const active =
-          href === "/leads"
-            ? pathname.startsWith("/leads")
-            : pathname === href;
+        const active = isNavActive(pathname, href);
         return (
           <Link
             key={href}

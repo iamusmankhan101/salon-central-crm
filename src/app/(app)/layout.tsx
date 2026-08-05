@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
 import { getAvatarColor, getInitials } from "@/lib/avatar";
 import { BrandMark } from "@/components/brand-mark";
 import { SidebarNav } from "./sidebar-nav";
+import { MobileNav } from "./mobile-nav";
 import { signOut } from "./actions";
 
 export default async function AppLayout({
@@ -20,7 +22,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen flex bg-[#F5F3FB]">
-      <aside className="w-60 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col py-5">
+      <aside className="hidden lg:flex w-60 flex-shrink-0 bg-white border-r border-slate-200 flex-col py-5">
         <div className="px-5 mb-6">
           <BrandMark className="w-28" />
         </div>
@@ -39,8 +41,16 @@ export default async function AppLayout({
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 flex-shrink-0 bg-white border-b border-slate-200 flex items-center justify-end px-6 gap-3">
-          <div className="text-right leading-tight">
+        <header className="h-16 flex-shrink-0 bg-white border-b border-slate-200 flex items-center gap-3 px-4 lg:px-6">
+          <MobileNav />
+
+          <Link href="/dashboard" className="lg:hidden flex-shrink-0">
+            <BrandMark className="w-24" />
+          </Link>
+
+          <div className="flex-1" />
+
+          <div className="hidden sm:block text-right leading-tight">
             <div className="text-sm font-medium text-slate-800">
               Hi, {displayName}
             </div>
@@ -57,7 +67,7 @@ export default async function AppLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-6 py-6">
+        <main className="flex-1 overflow-y-auto px-4 py-6 lg:px-6">
           <div className="max-w-6xl mx-auto">{children}</div>
         </main>
       </div>

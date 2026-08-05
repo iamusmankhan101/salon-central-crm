@@ -85,8 +85,8 @@ export default async function LeadDetailPage({
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 text-sm">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col items-start sm:items-end gap-2 text-sm w-full sm:w-auto">
+            <div className="flex items-center gap-2 flex-wrap">
               <StatusSelect leadId={typedLead.id} status={typedLead.status} />
               <CategorySelect
                 leadId={typedLead.id}
@@ -140,7 +140,7 @@ export default async function LeadDetailPage({
         <h2 className="text-sm font-medium text-slate-700">Log a call</h2>
         <form action={logCall} className="space-y-3">
           <input type="hidden" name="lead_id" value={typedLead.id} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">
                 Outcome

@@ -8,19 +8,22 @@ export function AssignSelect({
   leadId,
   assignedTo,
   reps,
+  onChangeOptimistic,
 }: {
   leadId: string;
   assignedTo: string | null;
   reps: Profile[];
+  onChangeOptimistic?: (assignedTo: string | null) => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
   return (
     <select
-      defaultValue={assignedTo ?? ""}
+      value={assignedTo ?? ""}
       disabled={isPending}
       onChange={(e) => {
         const next = e.target.value || null;
+        if (onChangeOptimistic) onChangeOptimistic(next);
         startTransition(() => {
           assignLead(leadId, next);
         });
