@@ -84,6 +84,9 @@ export async function LeadsPipeline({
   let listTotal = 0;
   let page = 1;
   let totalPages = 1;
+  // Supabase returns { data: null, error } rather than throwing, so without
+  // this an unmigrated schema or a bad filter looks identical to "no leads".
+  const queryErrors: string[] = [];
 
   if (view === "board") {
     boardColumns = await Promise.all(
@@ -99,7 +102,8 @@ export async function LeadsPipeline({
           .order("created_at", { ascending: false })
           .range(0, BOARD_CARD_LIMIT - 1);
         query = applySharedFilters(query, searchParams, isAdmin);
-        const { data, count } = await query;
+        const { data, count, error } = await query;
+        if (error) queryErrors.push(error.message);
         return {
           status: s.value,
           leads: (data ?? []) as Lead[],
@@ -119,7 +123,8 @@ export async function LeadsPipeline({
     if (searchParams.status) {
       query = query.eq("status", searchParams.status as LeadStatus);
     }
-    const { data, count } = await query;
+    const { data, count, error } = await query;
+    if (error) queryErrors.push(error.message);
     listLeads = (data ?? []) as Lead[];
     listTotal = count ?? 0;
     totalPages = Math.max(1, Math.ceil(listTotal / PAGE_SIZE));
@@ -286,6 +291,24 @@ export async function LeadsPipeline({
           </Link>
         </div>
       </div>
+
+      {queryErrors.length > 0 && (
+        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3.5 py-2.5 space-y-1">
+          <p className="font-medium">
+            Couldn&apos;t load leads — the pipeline below is incomplete.
+          </p>
+          <p className="text-red-600">{queryErrors[0]}</p>
+          {queryErrors[0].includes("leads.product") && (
+            <p className="text-red-600">
+              Run the pending migration{" "}
+              <code className="text-xs">
+                supabase/migrations/0006_add_lead_product.sql
+              </code>{" "}
+              in the Supabase SQL editor.
+            </p>
+          )}
+        </div>
+      )}
 
       {view === "board" ? (
         <PipelineBoard
