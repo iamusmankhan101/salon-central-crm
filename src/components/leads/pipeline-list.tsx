@@ -31,6 +31,7 @@ export function PipelineList({
   page,
   totalPages,
   baseParams,
+  basePath,
   PAGE_SIZE,
 }: {
   initialLeads: Lead[];
@@ -41,6 +42,7 @@ export function PipelineList({
   page: number;
   totalPages: number;
   baseParams: string;
+  basePath: string;
   PAGE_SIZE: number;
 }) {
   const [leads, setLeads] = useState(initialLeads);
@@ -74,7 +76,7 @@ export function PipelineList({
             {leads.map((lead) => (
               <tr key={lead.id} className="border-b border-slate-100 last:border-0">
                 <td className="px-4 py-3">
-                  <Link href={`/leads/${lead.id}`} className="flex items-center gap-2.5 group">
+                  <Link href={`${basePath}/${lead.id}`} className="flex items-center gap-2.5 group">
                     <span
                       className={`h-7 w-7 rounded-full ${getAvatarColor(
                         lead.name
@@ -137,7 +139,7 @@ export function PipelineList({
             className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm"
           >
             <Link
-              href={`/leads/${lead.id}`}
+              href={`${basePath}/${lead.id}`}
               className="flex items-center gap-2.5 group"
             >
               <span
@@ -203,7 +205,7 @@ export function PipelineList({
           <div className="flex items-center gap-2">
             {page > 1 ? (
               <Link
-                href={`/leads?${withParams(baseParams, {
+                href={`${basePath}?${withParams(baseParams, {
                   page: String(page - 1),
                 })}`}
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 transition"
@@ -222,7 +224,7 @@ export function PipelineList({
             </span>
             {page < totalPages ? (
               <Link
-                href={`/leads?${withParams(baseParams, {
+                href={`${basePath}?${withParams(baseParams, {
                   page: String(page + 1),
                 })}`}
                 className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 transition"

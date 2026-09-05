@@ -5,5 +5,5 @@ export default function Page({
 }: {
   searchParams: { error?: string };
 }) {
-  return <ImportLeadsForm product="salon_central" error={searchParams.error} />;
+  return <ImportLeadsForm product="pointly" error={searchParams.error} />;
 }

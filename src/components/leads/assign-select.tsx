@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { repLabel, type Profile } from "@/lib/types/database";
-import { assignLead } from "./actions";
+import { assignLead } from "@/lib/leads/actions";
 
 export function AssignSelect({
   leadId,

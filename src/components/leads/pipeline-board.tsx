@@ -38,12 +38,14 @@ export function PipelineBoard({
   reps,
   profileMap,
   baseParams,
+  basePath,
 }: {
   initialColumns: BoardColumn[];
   isAdmin: boolean;
   reps: Profile[];
   profileMap: Map<string, Profile>;
   baseParams: string;
+  basePath: string;
 }) {
   const [columns, setColumns] = useState(initialColumns);
 
@@ -116,6 +118,7 @@ export function PipelineBoard({
                 <LeadCard
                   key={lead.id}
                   lead={lead}
+                  basePath={basePath}
                   isAdmin={isAdmin}
                   reps={reps}
                   profileMap={profileMap}
@@ -129,7 +132,7 @@ export function PipelineBoard({
               )}
               {total > columnLeads.length && (
                 <Link
-                  href={`/leads?${withParams(baseParams, {
+                  href={`${basePath}?${withParams(baseParams, {
                     view: "list",
                     status,
                   })}`}
@@ -148,12 +151,14 @@ export function PipelineBoard({
 
 function LeadCard({
   lead,
+  basePath,
   isAdmin,
   reps,
   profileMap,
   onOptimisticUpdate,
 }: {
   lead: Lead;
+  basePath: string;
   isAdmin: boolean;
   reps: Profile[];
   profileMap: Map<string, Profile>;
@@ -161,7 +166,7 @@ function LeadCard({
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-3 shadow-sm hover:shadow-md transition">
-      <Link href={`/leads/${lead.id}`} className="flex items-start gap-2.5">
+      <Link href={`${basePath}/${lead.id}`} className="flex items-start gap-2.5">
         <span
           className={`h-9 w-9 rounded-full ${getAvatarColor(
             lead.name

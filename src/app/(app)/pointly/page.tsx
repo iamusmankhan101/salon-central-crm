@@ -8,5 +8,5 @@ export default function Page({
 }: {
   searchParams: LeadsSearchParams;
 }) {
-  return <LeadsPipeline product="salon_central" searchParams={searchParams} />;
+  return <LeadsPipeline product="pointly" searchParams={searchParams} />;
 }

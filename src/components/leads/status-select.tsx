@@ -7,7 +7,7 @@ import {
   STATUS_STYLES,
   type LeadStatus,
 } from "@/lib/types/database";
-import { updateLeadStatus } from "./actions";
+import { updateLeadStatus } from "@/lib/leads/actions";
 
 export function StatusSelect({
   leadId,

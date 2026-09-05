@@ -1,0 +1,165 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserAndProfile } from "@/lib/supabase/current-profile";
+import {
+  LEAD_CATEGORIES,
+  leadProduct,
+  repLabel,
+  type LeadProduct,
+  type Profile,
+} from "@/lib/types/database";
+import { createLead } from "@/lib/leads/actions";
+
+export async function NewLeadForm({
+  product,
+  error,
+}: {
+  product: LeadProduct;
+  error?: string;
+}) {
+  const { label, basePath } = leadProduct(product);
+
+  const { profile } = await getCurrentUserAndProfile();
+  if (profile?.role !== "admin") {
+    redirect(basePath);
+  }
+
+  const supabase = createClient();
+  const { data: profilesData } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("role", "sales_rep");
+  const reps = (profilesData ?? []) as Profile[];
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <Link href={basePath} className="text-sm text-slate-500 hover:underline">
+        ← Back to {label} pipeline
+      </Link>
+
+      <h1 className="text-xl font-semibold">Add {label} Lead</h1>
+
+      <form
+        action={createLead}
+        className="space-y-4 bg-white p-6 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <input type="hidden" name="product" value={product} />
+
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Venue Name *
+          </label>
+          <input
+            name="name"
+            required
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Phone
+            </label>
+            <input
+              name="phone"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Email
+            </label>
+            <input
+              name="email"
+              type="email"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Location
+          </label>
+          <input
+            name="company"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Category
+          </label>
+          <select
+            name="category"
+            defaultValue=""
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm bg-white"
+          >
+            <option value="">Uncategorized</option>
+            {LEAD_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Source
+          </label>
+          <input
+            name="source"
+            placeholder="e.g. website, referral, walk-in"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Assign to
+          </label>
+          <select
+            name="assigned_to"
+            defaultValue=""
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm bg-white"
+          >
+            <option value="">Unassigned</option>
+            {reps.map((rep) => (
+              <option key={rep.id} value={rep.id}>
+                {repLabel(rep)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Notes
+          </label>
+          <textarea
+            name="notes"
+            rows={3}
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full rounded-md bg-gradient-to-r from-brand to-brand-indigo text-white text-sm font-medium py-2 shadow-sm shadow-brand/30 hover:opacity-95 transition"
+        >
+          Add Lead
+        </button>
+      </form>
+    </div>
+  );
+}

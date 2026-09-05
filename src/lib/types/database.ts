@@ -1,5 +1,7 @@
 export type UserRole = "admin" | "sales_rep";
 
+export type LeadProduct = "salon_central" | "pointly";
+
 export type LeadStatus =
   | "new"
   | "contacted"
@@ -39,6 +41,7 @@ export interface Lead {
   notes: string | null;
   status: LeadStatus;
   category: LeadCategory | null;
+  product: LeadProduct;
   assigned_to: string | null;
   created_by: string | null;
   created_at: string;
@@ -130,3 +133,32 @@ export const CATEGORY_STYLES: Record<
   nail_studio: { badgeBg: "bg-fuchsia-50", badgeText: "text-fuchsia-700" },
   med_spa: { badgeBg: "bg-cyan-50", badgeText: "text-cyan-700" },
 };
+
+/** Each product gets its own pipeline pages; everything else (stages,
+ * categories, reps, call logs) is shared. `basePath` is the route prefix the
+ * shared lead components link against, `slug` is used in export filenames. */
+export interface LeadProductConfig {
+  value: LeadProduct;
+  label: string;
+  slug: string;
+  basePath: string;
+}
+
+export const LEAD_PRODUCTS: LeadProductConfig[] = [
+  {
+    value: "salon_central",
+    label: "Salon Central",
+    slug: "salon-central",
+    basePath: "/leads",
+  },
+  { value: "pointly", label: "Pointly", slug: "pointly", basePath: "/pointly" },
+];
+
+export function leadProduct(value: LeadProduct): LeadProductConfig {
+  return LEAD_PRODUCTS.find((p) => p.value === value) ?? LEAD_PRODUCTS[0];
+}
+
+/** Narrows untrusted input (form fields, query strings) to a known product. */
+export function parseLeadProduct(raw: string): LeadProduct | null {
+  return LEAD_PRODUCTS.find((p) => p.value === raw)?.value ?? null;
+}

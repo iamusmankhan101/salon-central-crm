@@ -6,11 +6,32 @@ import { createClient } from "@/lib/supabase/server";
 import { normalizeHeader, parseCsv } from "@/lib/csv";
 import {
   LEAD_CATEGORIES,
+  LEAD_PRODUCTS,
   LEAD_STATUSES,
+  leadProduct,
+  parseLeadProduct,
   type LeadCategory,
+  type LeadProduct,
   type LeadStatus,
   type Profile,
 } from "@/lib/types/database";
+
+/** A lead only ever lives under one product, but the mutation actions are
+ * called from shared client components that don't know which pipeline they're
+ * rendered in — so refresh both products' routes plus the dashboard. */
+function revalidateLeadPaths(leadId?: string) {
+  revalidatePath("/dashboard");
+  for (const product of LEAD_PRODUCTS) {
+    revalidatePath(product.basePath);
+    if (leadId) revalidatePath(`${product.basePath}/${leadId}`);
+  }
+}
+
+/** Products come in as form fields / route params, so never trust the raw
+ * value — fall back to the default pipeline rather than writing junk. */
+function productFromForm(formData: FormData): LeadProduct {
+  return parseLeadProduct(String(formData.get("product") ?? "")) ?? "salon_central";
+}
 
 export async function createLead(formData: FormData) {
   const supabase = createClient();
@@ -19,9 +40,14 @@ export async function createLead(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const product = productFromForm(formData);
+  const basePath = leadProduct(product).basePath;
+
   const name = String(formData.get("name") ?? "").trim();
   if (!name) {
-    redirect(`/leads/new?error=${encodeURIComponent("Venue name is required")}`);
+    redirect(
+      `${basePath}/new?error=${encodeURIComponent("Venue name is required")}`
+    );
   }
 
   const assignedTo = String(formData.get("assigned_to") ?? "") || null;
@@ -37,24 +63,22 @@ export async function createLead(formData: FormData) {
     notes: String(formData.get("notes") ?? "") || null,
     assigned_to: assignedTo,
     category,
+    product,
     created_by: user.id,
   });
 
   if (error) {
-    redirect(`/leads/new?error=${encodeURIComponent(error.message)}`);
+    redirect(`${basePath}/new?error=${encodeURIComponent(error.message)}`);
   }
 
-  revalidatePath("/leads");
-  revalidatePath("/dashboard");
-  redirect("/leads");
+  revalidateLeadPaths();
+  redirect(basePath);
 }
 
 export async function updateLeadStatus(leadId: string, status: LeadStatus) {
   const supabase = createClient();
   await supabase.from("leads").update({ status }).eq("id", leadId);
-  revalidatePath("/leads");
-  revalidatePath(`/leads/${leadId}`);
-  revalidatePath("/dashboard");
+  revalidateLeadPaths(leadId);
 }
 
 export async function updateLeadCategory(
@@ -63,17 +87,13 @@ export async function updateLeadCategory(
 ) {
   const supabase = createClient();
   await supabase.from("leads").update({ category }).eq("id", leadId);
-  revalidatePath("/leads");
-  revalidatePath(`/leads/${leadId}`);
-  revalidatePath("/dashboard");
+  revalidateLeadPaths(leadId);
 }
 
 export async function assignLead(leadId: string, repId: string | null) {
   const supabase = createClient();
   await supabase.from("leads").update({ assigned_to: repId }).eq("id", leadId);
-  revalidatePath("/leads");
-  revalidatePath(`/leads/${leadId}`);
-  revalidatePath("/dashboard");
+  revalidateLeadPaths(leadId);
 }
 
 export async function logCall(formData: FormData) {
@@ -101,9 +121,7 @@ export async function logCall(formData: FormData) {
     await supabase.from("leads").update({ status: nextStatus }).eq("id", leadId);
   }
 
-  revalidatePath(`/leads/${leadId}`);
-  revalidatePath("/leads");
-  revalidatePath("/dashboard");
+  revalidateLeadPaths(leadId);
 }
 
 export async function updateLeadNotes(formData: FormData) {
@@ -112,7 +130,18 @@ export async function updateLeadNotes(formData: FormData) {
   const notes = String(formData.get("notes") ?? "");
 
   await supabase.from("leads").update({ notes }).eq("id", leadId);
-  revalidatePath(`/leads/${leadId}`);
+  revalidateLeadPaths(leadId);
+}
+
+/** Wipes one product's pipeline only — the other product's leads are left
+ * alone even though both live in the same table. */
+export async function deleteAllLeads(formData: FormData) {
+  const supabase = createClient();
+  const product = productFromForm(formData);
+
+  await supabase.from("leads").delete().eq("product", product);
+
+  revalidateLeadPaths();
 }
 
 function resolveStatus(raw: string): LeadStatus {
@@ -150,6 +179,9 @@ export async function importLeads(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const product = productFromForm(formData);
+  const basePath = leadProduct(product).basePath;
+
   const { data: currentProfile } = await supabase
     .from("profiles")
     .select("role")
@@ -157,18 +189,22 @@ export async function importLeads(formData: FormData) {
     .single();
 
   if (currentProfile?.role !== "admin") {
-    redirect("/leads");
+    redirect(basePath);
   }
 
   const file = formData.get("file");
   if (!file || typeof file === "string") {
     redirect(
-      `/leads/import?error=${encodeURIComponent("Choose a CSV file to import")}`
+      `${basePath}/import?error=${encodeURIComponent(
+        "Choose a CSV file to import"
+      )}`
     );
   }
   if (file.size === 0) {
     redirect(
-      `/leads/import?error=${encodeURIComponent("Choose a CSV file to import")}`
+      `${basePath}/import?error=${encodeURIComponent(
+        "Choose a CSV file to import"
+      )}`
     );
   }
 
@@ -177,7 +213,7 @@ export async function importLeads(formData: FormData) {
 
   if (rows.length < 2) {
     redirect(
-      `/leads/import?error=${encodeURIComponent("CSV has no data rows")}`
+      `${basePath}/import?error=${encodeURIComponent("CSV has no data rows")}`
     );
   }
 
@@ -189,7 +225,7 @@ export async function importLeads(formData: FormData) {
 
   if (nameIdx === -1) {
     redirect(
-      `/leads/import?error=${encodeURIComponent(
+      `${basePath}/import?error=${encodeURIComponent(
         "CSV must have a Venue Name column"
       )}`
     );
@@ -241,6 +277,7 @@ export async function importLeads(formData: FormData) {
         (categoryIdx >= 0 ? resolveCategory(cell(row, categoryIdx)) : null),
       assigned_to:
         assignedIdx >= 0 ? resolveRep(cell(row, assignedIdx), reps) : null,
+      product,
       created_by: user.id,
     });
   }
@@ -253,7 +290,7 @@ export async function importLeads(formData: FormData) {
 
     if (error) {
       redirect(
-        `/leads/import?error=${encodeURIComponent(
+        `${basePath}/import?error=${encodeURIComponent(
           `Imported ${imported} leads, then failed: ${error.message}`
         )}`
       );
@@ -262,7 +299,6 @@ export async function importLeads(formData: FormData) {
     imported += chunk.length;
   }
 
-  revalidatePath("/leads");
-  revalidatePath("/dashboard");
-  redirect(`/leads?imported=${imported}&skipped=${skipped}`);
+  revalidateLeadPaths();
+  redirect(`${basePath}?imported=${imported}&skipped=${skipped}`);
 }

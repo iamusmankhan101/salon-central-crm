@@ -7,7 +7,7 @@ import {
   LEAD_CATEGORIES,
   type LeadCategory,
 } from "@/lib/types/database";
-import { updateLeadCategory } from "./actions";
+import { updateLeadCategory } from "@/lib/leads/actions";
 
 export function CategorySelect({
   leadId,
